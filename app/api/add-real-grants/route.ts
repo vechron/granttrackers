@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
         
       } catch (error) {
         console.error(`Error adding grant "${grant.title}":`, error)
-        results.push({ title: grant.title, status: 'error', error: error.message })
+        results.push({ title: grant.title, status: 'error', error: error instanceof Error ? error.message : 'Unknown error' })
       }
     }
     
