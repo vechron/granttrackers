@@ -5,9 +5,9 @@ import { ProgramList } from '@/components/Grants/ProgramList'
 import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 import { Breadcrumbs } from '@/components/SEO/Breadcrumbs'
 
-// Force dynamic rendering to ensure database queries run
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Use ISR with short revalidation for SEO + functionality
+export const revalidate = 300 // Revalidate every 5 minutes
+export const dynamicParams = true
 
 interface StatePageProps {
   params: { state: string }
