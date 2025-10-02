@@ -32,8 +32,7 @@ async function testUrls() {
       console.log(`   URL: ${program.url}`)
       
       const response = await fetch(program.url, {
-        method: 'HEAD',
-        timeout: 10000
+        method: 'HEAD'
       })
       
       if (response.ok) {
