@@ -1,6 +1,7 @@
-import { prisma } from './prisma'
-
 export async function generateSitemapUrls(baseUrl: string) {
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('./prisma')
+  
   const states = await prisma.state.findMany({
     select: { slug: true, updatedAt: true }
   })

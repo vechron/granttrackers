@@ -1,6 +1,31 @@
-import { prisma } from '@/lib/prisma'
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+
+// Detect Next's build phase so we never run at build
+const IS_BUILD =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  (process.env.VERCEL === '1' && !!process.env.BUILD_ID)
 
 export async function GET() {
+  // Never run during build collection
+  if (IS_BUILD) {
+    return new Response('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Build Phase</title></channel></rss>', {
+      headers: { 'Content-Type': 'application/xml' }
+    })
+  }
+
+  // Don't run without DB URL
+  if (!process.env.DATABASE_URL) {
+    return new Response('<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>No Database</title></channel></rss>', {
+      headers: { 'Content-Type': 'application/xml' }
+    })
+  }
+
+  // Lazy-load Prisma
+  const { prisma } = await import('@/lib/prisma')
+  
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Small Business Grant Tracker'
   
