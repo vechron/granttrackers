@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
     console.error('Error adding real grants:', error)
     return NextResponse.json({ 
       error: 'Failed to add real grants',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
