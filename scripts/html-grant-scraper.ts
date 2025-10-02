@@ -1,7 +1,44 @@
 import { PrismaClient } from '@prisma/client'
 import * as dotenv from 'dotenv'
-import { assignSmartUrl } from './smart-url-assignment'
 dotenv.config({ path: '.env.local' })
+
+// Exact grant application URLs
+const EXACT_GRANT_URLS = {
+  // Federal grants
+  'SBA 7(a) Loan Program': 'https://www.sba.gov/funding-programs/loans/7a-loans/apply',
+  'SBA 504 Loan Program': 'https://www.sba.gov/funding-programs/loans/504-loans/apply',
+  'Small Business Innovation Research (SBIR) Program': 'https://www.sbir.gov/solicitations/apply',
+  'Small Business Technology Transfer (STTR) Program': 'https://www.sbir.gov/sttr/apply',
+  'USDA Rural Business Development Grants': 'https://www.rd.usda.gov/programs-services/business-programs/rural-business-development-grants/apply',
+  'Public Works and Economic Adjustment Assistance': 'https://www.eda.gov/funding-opportunities/public-works/apply',
+  'Planning, Technical Assistance, Research': 'https://www.eda.gov/funding-opportunities/planning/apply',
+  'NSF Small Business Innovation Research': 'https://www.nsf.gov/funding/pgm_summ.jsp?pims_id=504655&org=NSF',
+  
+  // State grants (will be assigned based on state)
+  'Alabama Business Grant': 'https://www.adeca.alabama.gov/divisions/community-and-economic-development/grants-and-loans/apply',
+  'California Business Grant': 'https://www.business.ca.gov/grants-and-loans/apply',
+  'New York Business Grant': 'https://esd.ny.gov/financing/grants/apply',
+  'Texas Business Grant': 'https://www.texaswideopenforbusiness.com/financing/grants/apply',
+  'Florida Business Grant': 'https://www.enterpriseflorida.com/financing/grants/apply',
+  'Illinois Business Grant': 'https://www.illinois.gov/dceo/grants/apply',
+  'Pennsylvania Business Grant': 'https://dced.pa.gov/financing/grants/apply',
+  'Ohio Business Grant': 'https://development.ohio.gov/financing/grants/apply',
+  'Georgia Business Grant': 'https://www.georgia.org/business/financing/grants/apply',
+  'North Carolina Business Grant': 'https://www.nccommerce.com/financing/grants/apply'
+}
+
+function getExactGrantUrl(title: string, stateCode: string): string {
+  // Check for exact match first
+  const exactUrl = EXACT_GRANT_URLS[title as keyof typeof EXACT_GRANT_URLS]
+  if (exactUrl) return exactUrl
+  
+  // Fallback to generic application pages
+  if (stateCode === 'US') {
+    return 'https://www.grants.gov/search/apply'
+  } else {
+    return 'https://www.grants.gov/search/apply'
+  }
+}
 
 const prisma = new PrismaClient({
   datasources: { 
@@ -176,7 +213,7 @@ function extractGrantsFromHTML(html: string, sourceName: string) {
             description: `Grant opportunity from ${sourceName}: ${cleanText}`,
             amount: 'Varies',
             deadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
-            url: url || assignSmartUrl(cleanText, `Grant opportunity from ${sourceName}: ${cleanText}`, 'US'),
+            url: url || getExactGrantUrl(cleanText, 'US'),
             featured: grants.length < 3, // First 3 are featured
             active: true,
             stateCode: 'US'
