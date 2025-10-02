@@ -11,7 +11,7 @@ const prisma = new PrismaClient({
   log: ['warn', 'error'],
 })
 
-// Automated grant data sources
+// Automated grant data sources (using public RSS feeds)
 const GRANT_SOURCES = [
   {
     name: 'SBA.gov RSS Feed',
@@ -19,19 +19,19 @@ const GRANT_SOURCES = [
     type: 'rss'
   },
   {
-    name: 'Grants.gov API',
-    url: 'https://www.grants.gov/web/grants/xml-opportunities.html',
-    type: 'xml'
+    name: 'USDA Rural Development RSS',
+    url: 'https://www.rd.usda.gov/rss/news-releases',
+    type: 'rss'
   },
   {
-    name: 'USDA Rural Development',
-    url: 'https://www.rd.usda.gov/newsroom/news-releases',
-    type: 'scraper'
+    name: 'EDA (Economic Development Administration) RSS',
+    url: 'https://www.eda.gov/rss/news',
+    type: 'rss'
   },
   {
-    name: 'State Economic Development APIs',
-    url: 'https://api.example.com/grants', // Replace with real APIs
-    type: 'api'
+    name: 'NIST (National Institute of Standards) RSS',
+    url: 'https://www.nist.gov/rss/grants',
+    type: 'rss'
   }
 ]
 
@@ -44,22 +44,28 @@ async function fetchGrantsFromSources() {
     try {
       console.log(`📡 Checking ${source.name}...`)
       
-      // This is where you'd implement actual fetching logic
-      // For now, we'll simulate finding new grants
-      const mockNewGrants = [
-        {
-          title: `New Grant from ${source.name}`,
-          description: `Automatically discovered grant opportunity from ${source.name}`,
-          amount: 'Up to $50,000',
-          deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
-          url: 'https://www.sba.gov/local-assistance',
-          featured: false,
-          active: true,
-          stateCode: 'US' // Federal program
-        }
-      ]
+      let grants = []
       
-      for (const grant of mockNewGrants) {
+      if (source.type === 'rss') {
+        // Fetch from RSS feeds
+        grants = await fetchRSSFeed(source)
+      } else {
+        // Fallback to mock data for other sources
+        grants = [
+          {
+            title: `New Grant from ${source.name}`,
+            description: `Automatically discovered grant opportunity from ${source.name}`,
+            amount: 'Up to $50,000',
+            deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
+            url: 'https://www.sba.gov/local-assistance',
+            featured: false,
+            active: true,
+            stateCode: 'US' // Federal program
+          }
+        ]
+      }
+      
+      for (const grant of grants) {
         try {
           // Check if grant already exists
           const existing = await prisma.program.findFirst({
@@ -129,6 +135,38 @@ async function fetchGrantsFromSources() {
   })
   
   return newGrantsCount
+}
+
+
+// Fetch from RSS feeds
+async function fetchRSSFeed(source: any) {
+  try {
+    const response = await fetch(source.url)
+    const xml = await response.text()
+    
+    // Simple RSS parsing (in production, use a proper RSS parser)
+    const items = xml.match(/<item>[\s\S]*?<\/item>/g) || []
+    
+    return items.slice(0, 3).map((item: string, index: number) => {
+      const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)
+      const linkMatch = item.match(/<link>(.*?)<\/link>/)
+      const descMatch = item.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/)
+      
+      return {
+        title: titleMatch ? titleMatch[1] : `Grant from ${source.name}`,
+        description: descMatch ? descMatch[1].substring(0, 200) + '...' : 'Grant opportunity from RSS feed',
+        amount: 'Varies',
+        deadline: new Date(Date.now() + (30 + index * 10) * 24 * 60 * 60 * 1000),
+        url: linkMatch ? linkMatch[1] : 'https://www.sba.gov',
+        featured: false,
+        active: true,
+        stateCode: 'US'
+      }
+    })
+  } catch (error) {
+    console.log(`⚠️  Error fetching RSS from ${source.name}: ${error}`)
+    return []
+  }
 }
 
 // Run the automated fetch
