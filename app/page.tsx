@@ -5,10 +5,16 @@ import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 // Ensure Node.js runtime (not Edge) for Prisma
 export const runtime = 'nodejs'
 
-// Make this page dynamic to avoid build-time database access
-export const dynamic = 'force-dynamic'
+// Use ISR with fallback to avoid build-time database access
+export const revalidate = 3600 // Revalidate every hour
+export const dynamicParams = true
 
 async function getFeaturedPrograms() {
+  // Skip during build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return []
+  }
+  
   // Lazy-load Prisma to avoid build-time database connections
   const { prisma } = await import('@/lib/prisma')
   
@@ -37,6 +43,11 @@ async function getFeaturedPrograms() {
 }
 
 async function getStates() {
+  // Skip during build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return []
+  }
+  
   // Lazy-load Prisma to avoid build-time database connections
   const { prisma } = await import('@/lib/prisma')
   

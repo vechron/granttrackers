@@ -1,16 +1,27 @@
 import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
 import { generateTitle, generateDescription } from '@/lib/seo'
 import { StateHero } from '@/components/Grants/StateHero'
 import { ProgramList } from '@/components/Grants/ProgramList'
 import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 import { Breadcrumbs } from '@/components/SEO/Breadcrumbs'
 
+// Use ISR with fallback to avoid build-time database access
+export const revalidate = 3600 // Revalidate every hour
+export const dynamicParams = true
+
 interface StatePageProps {
   params: { state: string }
 }
 
 async function getState(slug: string) {
+  // Skip during build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return null
+  }
+  
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   return await prisma.state.findUnique({
     where: { slug },
     include: {
@@ -32,6 +43,14 @@ async function getState(slug: string) {
 }
 
 export async function generateStaticParams() {
+  // Skip during build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return []
+  }
+  
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   const states = await prisma.state.findMany({
     select: { slug: true }
   })

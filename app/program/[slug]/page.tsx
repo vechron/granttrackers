@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
 import { generateTitle, generateDescription } from '@/lib/seo'
 import { formatDate } from '@/lib/format'
 import { JsonLD, generateArticleSchema, generateBreadcrumbSchema } from '@/components/SEO/JsonLD'
@@ -7,11 +6,23 @@ import { Breadcrumbs } from '@/components/SEO/Breadcrumbs'
 import { AdSlot } from '@/components/Ads/AdSlot'
 import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 
+// Use ISR with fallback to avoid build-time database access
+export const revalidate = 3600 // Revalidate every hour
+export const dynamicParams = true
+
 interface ProgramPageProps {
   params: { slug: string }
 }
 
 async function getProgram(slug: string) {
+  // Skip during build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return null
+  }
+  
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   return await prisma.program.findUnique({
     where: { slug },
     include: { state: true }
@@ -19,6 +30,14 @@ async function getProgram(slug: string) {
 }
 
 export async function generateStaticParams() {
+  // Skip during build phase
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return []
+  }
+  
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   const programs = await prisma.program.findMany({
     where: { 
       active: true,
