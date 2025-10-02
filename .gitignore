@@ -90,3 +90,16 @@ jspm_packages/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+
+# Prisma
+prisma/migrations/
+*.db
+*.db-journal
+
+# Backup files
+*.backup
+*.bak
+
+# Temporary files
+tmp/
+temp/
