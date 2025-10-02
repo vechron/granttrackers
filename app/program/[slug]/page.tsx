@@ -6,9 +6,9 @@ import { Breadcrumbs } from '@/components/SEO/Breadcrumbs'
 import { AdSlot } from '@/components/Ads/AdSlot'
 import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 
-// Use ISR with fallback to avoid build-time database access
-export const revalidate = 3600 // Revalidate every hour
-export const dynamicParams = true
+// Force dynamic rendering to ensure database queries run
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface ProgramPageProps {
   params: { slug: string }

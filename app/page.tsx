@@ -10,50 +10,31 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 async function getFeaturedPrograms() {
-  console.log('🔍 getFeaturedPrograms called')
-  console.log('🔍 NEXT_PHASE:', process.env.NEXT_PHASE)
-  console.log('🔍 NODE_ENV:', process.env.NODE_ENV)
-  
-  // Skip during build phase
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
-    console.log('⏭️ Skipping during build phase')
-    return []
-  }
-  
   // Lazy-load Prisma to avoid build-time database connections
   const { prisma } = await import('@/lib/prisma')
-  console.log('📡 Prisma loaded, querying database...')
   
-  try {
-    const programs = await prisma.program.findMany({
-      where: { 
-        featured: true, 
-        active: true,
-        OR: [
-          { deadline: null },
-          { deadline: { gte: new Date() } }
-        ]
-      },
-      select: { 
-        id: true, 
-        title: true, 
-        slug: true, 
-        description: true,
-        amount: true, 
-        deadline: true,
-        url: true,
-        state: { select: { name: true, slug: true } } 
-      },
-      take: 6,
-      orderBy: { createdAt: 'desc' }
-    })
-    
-    console.log(`✅ Found ${programs.length} featured programs`)
-    return programs
-  } catch (error) {
-    console.error('❌ Error fetching featured programs:', error)
-    return []
-  }
+  return await prisma.program.findMany({
+    where: { 
+      featured: true, 
+      active: true,
+      OR: [
+        { deadline: null },
+        { deadline: { gte: new Date() } }
+      ]
+    },
+    select: { 
+      id: true, 
+      title: true, 
+      slug: true, 
+      description: true,
+      amount: true, 
+      deadline: true,
+      url: true,
+      state: { select: { name: true, slug: true } } 
+    },
+    take: 6,
+    orderBy: { createdAt: 'desc' }
+  })
 }
 
 async function getStates() {
@@ -76,10 +57,6 @@ export default async function HomePage() {
     getFeaturedPrograms(),
     getStates()
   ])
-  
-  // Debug: Show what we got
-  console.log('🏠 HomePage - Featured Programs:', featuredPrograms.length)
-  console.log('🏠 HomePage - States:', states.length)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -124,10 +101,6 @@ export default async function HomePage() {
           {/* Featured Programs */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Featured Programs</h2>
-          {/* Debug info */}
-          <div className="bg-yellow-100 p-4 rounded mb-4">
-            <p className="text-sm">Debug: Found {featuredPrograms.length} featured programs</p>
-          </div>
           <div className="space-y-6">
               {featuredPrograms.map((program, index) => (
                 <div key={program.id}>
