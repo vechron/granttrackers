@@ -11,6 +11,8 @@ export const dynamicParams = true
 
 async function getFeaturedPrograms() {
   console.log('🔍 getFeaturedPrograms called')
+  console.log('🔍 NEXT_PHASE:', process.env.NEXT_PHASE)
+  console.log('🔍 NODE_ENV:', process.env.NODE_ENV)
   
   // Skip during build phase
   if (process.env.NEXT_PHASE === 'phase-production-build') {
@@ -22,31 +24,36 @@ async function getFeaturedPrograms() {
   const { prisma } = await import('@/lib/prisma')
   console.log('📡 Prisma loaded, querying database...')
   
-  const programs = await prisma.program.findMany({
-    where: { 
-      featured: true, 
-      active: true,
-      OR: [
-        { deadline: null },
-        { deadline: { gte: new Date() } }
-      ]
-    },
-    select: { 
-      id: true, 
-      title: true, 
-      slug: true, 
-      description: true,
-      amount: true, 
-      deadline: true,
-      url: true,
-      state: { select: { name: true, slug: true } } 
-    },
-    take: 6,
-    orderBy: { createdAt: 'desc' }
-  })
-  
-  console.log(`✅ Found ${programs.length} featured programs`)
-  return programs
+  try {
+    const programs = await prisma.program.findMany({
+      where: { 
+        featured: true, 
+        active: true,
+        OR: [
+          { deadline: null },
+          { deadline: { gte: new Date() } }
+        ]
+      },
+      select: { 
+        id: true, 
+        title: true, 
+        slug: true, 
+        description: true,
+        amount: true, 
+        deadline: true,
+        url: true,
+        state: { select: { name: true, slug: true } } 
+      },
+      take: 6,
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    console.log(`✅ Found ${programs.length} featured programs`)
+    return programs
+  } catch (error) {
+    console.error('❌ Error fetching featured programs:', error)
+    return []
+  }
 }
 
 async function getStates() {
