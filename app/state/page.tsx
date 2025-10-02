@@ -1,6 +1,9 @@
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
 import { generateTitle, generateDescription } from '@/lib/seo'
+
+// Make this page dynamic to avoid build-time database access
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function generateMetadata() {
   return {
@@ -10,6 +13,9 @@ export async function generateMetadata() {
 }
 
 async function getStates() {
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   return await prisma.state.findMany({
     include: {
       _count: {

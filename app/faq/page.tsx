@@ -1,7 +1,10 @@
-import { prisma } from '@/lib/prisma'
 import { generateTitle, generateDescription } from '@/lib/seo'
 import { JsonLD, generateFAQSchema } from '@/components/SEO/JsonLD'
 import { Breadcrumbs } from '@/components/SEO/Breadcrumbs'
+
+// Make this page dynamic to avoid build-time database access
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function generateMetadata() {
   return {
@@ -11,6 +14,9 @@ export async function generateMetadata() {
 }
 
 async function getFAQs() {
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   return await prisma.fAQ.findMany({
     where: { active: true },
     orderBy: { order: 'asc' }
