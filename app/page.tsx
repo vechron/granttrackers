@@ -1,15 +1,17 @@
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
 import { AdSlot } from '@/components/Ads/AdSlot'
 import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 
 // Ensure Node.js runtime (not Edge) for Prisma
 export const runtime = 'nodejs'
 
-// ISR revalidation - 1 hour for state index
-export const revalidate = 3600
+// Make this page dynamic to avoid build-time database access
+export const dynamic = 'force-dynamic'
 
 async function getFeaturedPrograms() {
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   return await prisma.program.findMany({
     where: { 
       featured: true, 
@@ -35,6 +37,9 @@ async function getFeaturedPrograms() {
 }
 
 async function getStates() {
+  // Lazy-load Prisma to avoid build-time database connections
+  const { prisma } = await import('@/lib/prisma')
+  
   return await prisma.state.findMany({
     select: { id: true, name: true, slug: true },
     orderBy: { name: 'asc' }
