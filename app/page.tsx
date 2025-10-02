@@ -5,9 +5,9 @@ import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 // Ensure Node.js runtime (not Edge) for Prisma
 export const runtime = 'nodejs'
 
-// Use ISR with fallback to avoid build-time database access
-export const revalidate = 3600 // Revalidate every hour
-export const dynamicParams = true
+// Force dynamic rendering to ensure database queries run
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 async function getFeaturedPrograms() {
   console.log('🔍 getFeaturedPrograms called')
