@@ -23,6 +23,7 @@ async function getFeaturedPrograms() {
       id: true, 
       title: true, 
       slug: true, 
+      description: true,
       amount: true, 
       deadline: true,
       url: true,

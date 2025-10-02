@@ -28,12 +28,13 @@ export async function GET(request: NextRequest) {
       await revalidatePrograms()
     }
     
-    // 2. Check for programs with missing state relationships
-    const orphanedPrograms = await prisma.program.count({
-      where: {
-        stateId: null
-      }
-    })
+    // 2. Check for programs with missing state relationships (defensive check)
+    const [{ count: orphanedPrograms }] = await prisma.$queryRaw<
+      { count: number }[]
+    >`SELECT COUNT(*)::int AS count
+      FROM public.programs p
+      LEFT JOIN public.states s ON s.id = p."stateId"
+      WHERE s.id IS NULL;`
     
     // 3. Log health check
     await prisma.healthCheck.create({
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
         name: 'automated_updates',
         ok: false,
         details: {
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
         }
       }
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ 
       error: 'Automated updates failed',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }

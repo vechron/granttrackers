@@ -28,7 +28,7 @@ async function testRLS() {
     })
     console.log(`✅ Programs (active only): ${programs.length} records`)
     
-    const faqs = await prisma.faq.findMany({ take: 3 })
+    const faqs = await prisma.fAQ.findMany({ take: 3 })
     console.log(`✅ FAQs (public read): ${faqs.length} records`)
     
     // Test health checks (should work with service role)

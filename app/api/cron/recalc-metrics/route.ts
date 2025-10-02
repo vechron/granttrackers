@@ -19,10 +19,13 @@ export async function GET(request: NextRequest) {
       } 
     })
     
-    // 2. Check data integrity
-    const orphanedPrograms = await prisma.program.count({
-      where: { state: null }
-    })
+    // 2. Check data integrity (defensive check for orphaned programs)
+    const [{ count: orphanedPrograms }] = await prisma.$queryRaw<
+      { count: number }[]
+    >`SELECT COUNT(*)::int AS count
+      FROM public.programs p
+      LEFT JOIN public.states s ON s.id = p."stateId"
+      WHERE s.id IS NULL;`
     
     const programsWithInvalidDeadlines = await prisma.program.count({
       where: {
@@ -81,7 +84,7 @@ export async function GET(request: NextRequest) {
         name: 'nightly_metrics',
         ok: false,
         details: {
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
         }
       }
@@ -89,7 +92,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ 
       error: 'Metrics recalculation failed',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }

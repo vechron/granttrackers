@@ -104,12 +104,12 @@ async function fetchGrantsFromSources() {
             console.log(`✅ Added: ${grant.title}`)
           }
         } catch (error) {
-          console.error(`❌ Error adding grant: ${error.message}`)
+          console.error(`❌ Error adding grant: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
       }
       
     } catch (error) {
-      console.error(`❌ Error fetching from ${source.name}:`, error.message)
+      console.error(`❌ Error fetching from ${source.name}:`, error instanceof Error ? error.message : 'Unknown error')
     }
   }
   
