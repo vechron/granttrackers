@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { generateTitle, generateDescription } from '@/lib/seo'
 
-// Make this page dynamic to avoid build-time database access
-export const dynamic = 'force-dynamic'
+// Use ISR for SEO optimization with low cost
+export const revalidate = 3600 // Revalidate every hour (low cost)
+export const dynamicParams = true
 export const runtime = 'nodejs'
 
 export async function generateMetadata() {

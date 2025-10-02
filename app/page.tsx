@@ -5,8 +5,8 @@ import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 // Ensure Node.js runtime (not Edge) for Prisma
 export const runtime = 'nodejs'
 
-// Use ISR with short revalidation for SEO + functionality
-export const revalidate = 300 // Revalidate every 5 minutes
+// Use ISR with cost-effective revalidation for SEO + low cost
+export const revalidate = 3600 // Revalidate every hour (low cost)
 export const dynamicParams = true
 
 async function getFeaturedPrograms() {

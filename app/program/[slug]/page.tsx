@@ -6,8 +6,8 @@ import { Breadcrumbs } from '@/components/SEO/Breadcrumbs'
 import { AdSlot } from '@/components/Ads/AdSlot'
 import { StickySidebarAd } from '@/components/Ads/StickySidebarAd'
 
-// Use ISR with short revalidation for SEO + functionality
-export const revalidate = 300 // Revalidate every 5 minutes
+// Use ISR with cost-effective revalidation for SEO + low cost
+export const revalidate = 3600 // Revalidate every hour (low cost)
 export const dynamicParams = true
 
 interface ProgramPageProps {
