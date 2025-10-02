@@ -69,6 +69,10 @@ export default async function HomePage() {
     getFeaturedPrograms(),
     getStates()
   ])
+  
+  // Debug: Show what we got
+  console.log('🏠 HomePage - Featured Programs:', featuredPrograms.length)
+  console.log('🏠 HomePage - States:', states.length)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -111,9 +115,13 @@ export default async function HomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3">
           {/* Featured Programs */}
-          <section className="mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Featured Programs</h2>
-            <div className="space-y-6">
+        <section className="mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Featured Programs</h2>
+          {/* Debug info */}
+          <div className="bg-yellow-100 p-4 rounded mb-4">
+            <p className="text-sm">Debug: Found {featuredPrograms.length} featured programs</p>
+          </div>
+          <div className="space-y-6">
               {featuredPrograms.map((program, index) => (
                 <div key={program.id}>
                   {/* Show ad after 2nd program */}
