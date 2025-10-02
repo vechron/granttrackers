@@ -5,6 +5,11 @@ import { prisma } from '@/lib/prisma'
 export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
+  // Skip during build process
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_URL) {
+    return NextResponse.json({ message: 'Build time - skipping execution' })
+  }
+  
   try {
     console.log('📊 Running nightly metrics recalculation...')
     
