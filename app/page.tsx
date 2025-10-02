@@ -10,15 +10,19 @@ export const revalidate = 3600 // Revalidate every hour
 export const dynamicParams = true
 
 async function getFeaturedPrograms() {
+  console.log('🔍 getFeaturedPrograms called')
+  
   // Skip during build phase
   if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('⏭️ Skipping during build phase')
     return []
   }
   
   // Lazy-load Prisma to avoid build-time database connections
   const { prisma } = await import('@/lib/prisma')
+  console.log('📡 Prisma loaded, querying database...')
   
-  return await prisma.program.findMany({
+  const programs = await prisma.program.findMany({
     where: { 
       featured: true, 
       active: true,
@@ -40,6 +44,9 @@ async function getFeaturedPrograms() {
     take: 6,
     orderBy: { createdAt: 'desc' }
   })
+  
+  console.log(`✅ Found ${programs.length} featured programs`)
+  return programs
 }
 
 async function getStates() {
