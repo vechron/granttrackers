@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
-// Ensure Node.js runtime for Prisma
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
-export async function GET(request: NextRequest) {
-  // Skip during build process
-  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_URL) {
-    return NextResponse.json({ message: 'Build time - skipping execution' })
+// Detect Next build phase reliably
+const IS_BUILD =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  process.env.VERCEL === '1' && process.env.BUILD_ID ? true : false
+
+export async function GET(_req: NextRequest) {
+  // Never run during build
+  if (IS_BUILD) {
+    return NextResponse.json({ skipped: true, reason: 'build phase' })
   }
-  
+
+  // Don't run without a DB URL
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ skipped: true, reason: 'no DATABASE_URL' })
+  }
+
+  // Lazy-load Prisma
+  const { prisma } = await import('@/lib/prisma')
+
   try {
-    console.log('🔍 Checking system health...')
-    
     // Get recent unhealthy checks (last 24 hours)
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
@@ -27,8 +39,6 @@ export async function GET(request: NextRequest) {
     })
     
     if (unhealthy.length > 0) {
-      console.log(`🚨 Found ${unhealthy.length} unhealthy checks`)
-      
       // Send Slack notification if webhook is configured
       if (process.env.SLACK_WEBHOOK_URL) {
         const message = {
@@ -59,17 +69,13 @@ export async function GET(request: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(message)
           })
-          console.log('✅ Slack notification sent')
         } catch (error) {
           console.error('❌ Failed to send Slack notification:', error)
         }
-      } else {
-        console.log('⚠️  SLACK_WEBHOOK_URL not configured - skipping notification')
       }
       
       return NextResponse.json({
-        success: true,
-        message: 'Health check completed with issues',
+        ok: true,
         unhealthyCount: unhealthy.length,
         checks: unhealthy.map(h => ({
           name: h.name,
@@ -78,20 +84,19 @@ export async function GET(request: NextRequest) {
         }))
       })
     } else {
-      console.log('✅ All health checks passing')
       return NextResponse.json({
-        success: true,
-        message: 'All health checks passing',
+        ok: true,
         unhealthyCount: 0
       })
     }
     
-  } catch (error) {
-    console.error('❌ Health check notification failed:', error)
-    
-    return NextResponse.json({ 
-      error: 'Health check notification failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
   }
 }

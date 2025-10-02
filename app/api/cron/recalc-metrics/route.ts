@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
-// Ensure Node.js runtime for Prisma
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
-export async function GET(request: NextRequest) {
-  // Skip during build process
-  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_URL) {
-    return NextResponse.json({ message: 'Build time - skipping execution' })
+// Detect Next build phase reliably
+const IS_BUILD =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  process.env.VERCEL === '1' && process.env.BUILD_ID ? true : false
+
+export async function GET(_req: NextRequest) {
+  // Never run during build
+  if (IS_BUILD) {
+    return NextResponse.json({ skipped: true, reason: 'build phase' })
   }
-  
+
+  // Don't run without a DB URL
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ skipped: true, reason: 'no DATABASE_URL' })
+  }
+
+  // Lazy-load Prisma
+  const { prisma } = await import('@/lib/prisma')
+
   try {
-    console.log('📊 Running nightly metrics recalculation...')
-    
     // 1. Calculate program statistics
     const totalPrograms = await prisma.program.count()
     const activePrograms = await prisma.program.count({ where: { active: true } })
@@ -44,30 +56,31 @@ export async function GET(request: NextRequest) {
     const dataIntegrityScore = orphanedPrograms === 0 && programsWithInvalidDeadlines === 0 ? 100 : 50
     const overallHealth = dataIntegrityScore
     
-    // 4. Log comprehensive health check
-    await prisma.healthCheck.create({
-      data: {
-        name: 'nightly_metrics',
-        ok: overallHealth >= 90,
-        details: {
-          totalPrograms,
-          activePrograms,
-          featuredPrograms,
-          expiredPrograms,
-          orphanedPrograms,
-          programsWithInvalidDeadlines,
-          dataIntegrityScore,
-          overallHealth,
-          timestamp: new Date().toISOString()
+    // 4. Log comprehensive health check (ignore if table missing)
+    try {
+      await prisma.healthCheck.create({
+        data: {
+          name: 'nightly_metrics',
+          ok: overallHealth >= 90,
+          details: {
+            totalPrograms,
+            activePrograms,
+            featuredPrograms,
+            expiredPrograms,
+            orphanedPrograms,
+            programsWithInvalidDeadlines,
+            dataIntegrityScore,
+            overallHealth,
+            timestamp: new Date().toISOString()
+          }
         }
-      }
-    })
-    
-    console.log(`✅ Metrics calculated - Health Score: ${overallHealth}/100`)
+      })
+    } catch {
+      // swallow if health_checks not provisioned
+    }
     
     return NextResponse.json({
-      success: true,
-      message: 'Nightly metrics recalculation completed',
+      ok: true,
       metrics: {
         totalPrograms,
         activePrograms,
@@ -80,24 +93,28 @@ export async function GET(request: NextRequest) {
       }
     })
     
-  } catch (error) {
-    console.error('❌ Metrics recalculation failed:', error)
-    
-    // Log failed health check
-    await prisma.healthCheck.create({
-      data: {
-        name: 'nightly_metrics',
-        ok: false,
-        details: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
+  } catch (err) {
+    // try to record failure, but don't crash build
+    try {
+      const { prisma } = await import('@/lib/prisma')
+      await prisma.healthCheck.create({
+        data: {
+          name: 'nightly_metrics',
+          ok: false,
+          details: {
+            error: err instanceof Error ? err.message : 'Unknown error',
+            timestamp: new Date().toISOString()
+          }
         }
-      }
-    })
-    
-    return NextResponse.json({ 
-      error: 'Metrics recalculation failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+      })
+    } catch {} // ignore if not available
+
+    return NextResponse.json(
+      {
+        ok: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
   }
 }
