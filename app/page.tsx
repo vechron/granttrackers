@@ -38,17 +38,14 @@ async function getFeaturedPrograms() {
 }
 
 async function getStates() {
-  // Skip during build phase
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
-    return []
-  }
-  
   // Lazy-load Prisma to avoid build-time database connections
   const { prisma } = await import('@/lib/prisma')
   
   return await prisma.state.findMany({
     select: { id: true, name: true, slug: true },
-    orderBy: { name: 'asc' }
+    orderBy: { name: 'asc' },
+    take: 50 // Limit to 50 states (exclude US federal)
+    where: { code: { not: 'US' } } // Exclude federal programs from state list
   })
 }
 
