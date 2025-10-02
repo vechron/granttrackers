@@ -55,7 +55,16 @@ async function fetchRealGrants() {
     try {
       console.log(`📡 Fetching from ${source.name}...`)
       
-      let grants = []
+      let grants: Array<{
+        title: string;
+        description: string;
+        amount: string;
+        deadline: Date;
+        url: string;
+        featured: boolean;
+        active: boolean;
+        stateCode: string;
+      }> = []
       
       if (source.type === 'xml') {
         grants = await fetchGrantsGovXML(source)

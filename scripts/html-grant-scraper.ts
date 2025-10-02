@@ -196,7 +196,7 @@ function extractGrantsFromHTML(html: string, sourceName: string) {
 
 // Get realistic grants based on the source
 function getRealisticGrantsForSource(sourceName: string) {
-  const baseGrants = {
+  const baseGrants: Record<string, Array<{title: string, description: string, amount: string, url: string}>> = {
     'SBA Funding Programs': [
       {
         title: 'SBA 7(a) Loan Program',
