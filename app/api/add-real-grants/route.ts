@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { rateLimit, getClientIP, createRateLimitHeaders } from '@/lib/rate-limit'
-import { ProgramInput } from '@/lib/validations'
-import { revalidatePrograms } from '@/lib/cache'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+
+// Detect Next's build phase so we never run at build
+const IS_BUILD =
+  process.env.NEXT_PHASE === 'phase-production-build' ||
+  (process.env.VERCEL === '1' && !!process.env.BUILD_ID)
 
 const realGrants = [
   {
@@ -62,6 +68,21 @@ const realGrants = [
 ]
 
 export async function POST(request: NextRequest) {
+  // Never run during build collection
+  if (IS_BUILD) {
+    return NextResponse.json({ skipped: true, reason: 'build phase' })
+  }
+
+  // Don't run without DB URL (e.g., preview build)
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ skipped: true, reason: 'no DATABASE_URL' })
+  }
+
+  // Lazy-load Prisma and other dependencies
+  const { prisma } = await import('@/lib/prisma')
+  const { rateLimit, getClientIP, createRateLimitHeaders } = await import('@/lib/rate-limit')
+  const { revalidatePrograms } = await import('@/lib/cache')
+
   try {
     // Rate limiting
     const clientIP = getClientIP(request)
