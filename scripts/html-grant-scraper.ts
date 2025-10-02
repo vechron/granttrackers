@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import * as dotenv from 'dotenv'
+import { assignSmartUrl } from './smart-url-assignment'
 dotenv.config({ path: '.env.local' })
 
 const prisma = new PrismaClient({
@@ -175,7 +176,7 @@ function extractGrantsFromHTML(html: string, sourceName: string) {
             description: `Grant opportunity from ${sourceName}: ${cleanText}`,
             amount: 'Varies',
             deadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
-            url: url || `https://www.sba.gov/funding-programs`,
+            url: url || assignSmartUrl(cleanText, `Grant opportunity from ${sourceName}: ${cleanText}`, 'US'),
             featured: grants.length < 3, // First 3 are featured
             active: true,
             stateCode: 'US'

@@ -42,10 +42,10 @@ async function getStates() {
   const { prisma } = await import('@/lib/prisma')
   
   return await prisma.state.findMany({
+    where: { code: { not: 'US' } }, // Exclude federal programs from state list
     select: { id: true, name: true, slug: true },
     orderBy: { name: 'asc' },
-    take: 50 // Limit to 50 states (exclude US federal)
-    where: { code: { not: 'US' } } // Exclude federal programs from state list
+    take: 50 // Limit to 50 states
   })
 }
 

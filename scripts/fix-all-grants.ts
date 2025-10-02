@@ -162,7 +162,7 @@ async function fixAllGrants() {
 // Run the fix
 fixAllGrants()
   .then(async (result) => {
-    console.log(`✅ Grant data fix completed. Deleted ${result.deleted}, added ${result.added} grants.`)
+    console.log(`✅ Grant data fix completed. Deleted ${result?.deleted || 0}, added ${result?.added || 0} grants.`)
     await prisma.$disconnect()
   })
   .catch(async (error) => {

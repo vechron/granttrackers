@@ -40,7 +40,6 @@ const FEDERAL_GRANT_URLS = {
   'HUD SBIR Program': 'https://www.hud.gov/sbir',
   'Justice SBIR Program': 'https://www.justice.gov/sbir',
   'State SBIR Program': 'https://www.state.gov/sbir',
-  'USDA SBIR Program': 'https://www.usda.gov/sbir',
   'USDA STTR Program': 'https://www.usda.gov/sttr'
 }
 
@@ -62,7 +61,7 @@ async function addFederalSpecificUrls() {
   for (const program of federalPrograms) {
     try {
       // Find matching URL for this program
-      const specificUrl = FEDERAL_GRANT_URLS[program.title]
+      const specificUrl = FEDERAL_GRANT_URLS[program.title as keyof typeof FEDERAL_GRANT_URLS]
       
       if (specificUrl && specificUrl !== program.url) {
         await prisma.program.update({
