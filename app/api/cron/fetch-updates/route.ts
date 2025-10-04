@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePrograms } from '@/lib/cache'
+import { 
+  fetchSBAgrants, 
+  fetchGrantsGovRSS, 
+  fetchUSDAGrants, 
+  fetchEDAGrants, 
+  addGrantsToDatabase 
+} from '@/lib/grant-fetchers'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -61,12 +68,49 @@ export async function GET(_req: NextRequest) {
       // swallow if health_checks not provisioned in preview
     }
 
-    // 4) TODO: fetch external sources (SBA/Grants.gov/state feeds)
+    // 4) Fetch new grants from external sources
+    let newGrantsCount = 0
+    try {
+      // Fetch from SBA RSS feed
+      const sbaGrants = await fetchSBAgrants()
+      if (sbaGrants.length > 0) {
+        await addGrantsToDatabase(sbaGrants)
+        newGrantsCount += sbaGrants.length
+      }
+
+      // Fetch from Grants.gov RSS feed
+      const grantsGovGrants = await fetchGrantsGovRSS()
+      if (grantsGovGrants.length > 0) {
+        await addGrantsToDatabase(grantsGovGrants)
+        newGrantsCount += grantsGovGrants.length
+      }
+
+      // Fetch from USDA RSS feed
+      const usdaGrants = await fetchUSDAGrants()
+      if (usdaGrants.length > 0) {
+        await addGrantsToDatabase(usdaGrants)
+        newGrantsCount += usdaGrants.length
+      }
+
+      // Fetch from EDA RSS feed
+      const edaGrants = await fetchEDAGrants()
+      if (edaGrants.length > 0) {
+        await addGrantsToDatabase(edaGrants)
+        newGrantsCount += edaGrants.length
+      }
+
+      if (newGrantsCount > 0) {
+        await revalidatePrograms()
+      }
+    } catch (fetchError) {
+      console.error('Error fetching new grants:', fetchError)
+    }
 
     return NextResponse.json({
       ok: true,
       expiredProgramsDeactivated: expired.count,
       orphanedPrograms,
+      newGrantsFetched: newGrantsCount,
     })
   } catch (err) {
     // try to record failure, but don't crash build
