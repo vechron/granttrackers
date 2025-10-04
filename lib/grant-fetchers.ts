@@ -246,6 +246,55 @@ export async function fetchEDAGrants(): Promise<GrantData[]> {
   }
 }
 
+// Fetch state-specific grants
+export async function fetchStateGrants(): Promise<GrantData[]> {
+  try {
+    // Sample state grants for different states
+    const stateGrants: GrantData[] = [
+      {
+        title: 'California Small Business Development Grant',
+        description: 'State funding for California small businesses to support growth and job creation.',
+        url: 'https://business.ca.gov/grants-and-funding/',
+        stateCode: 'CA',
+        featured: true
+      },
+      {
+        title: 'Texas Economic Development Grant',
+        description: 'Texas state funding for business development and expansion projects.',
+        url: 'https://gov.texas.gov/business/page/economic_development',
+        stateCode: 'TX',
+        featured: true
+      },
+      {
+        title: 'Florida Small Business Grant Program',
+        description: 'Florida state grants for small business development and innovation.',
+        url: 'https://www.floridajobs.org/business-growth-and-partnerships/for-businesses',
+        stateCode: 'FL',
+        featured: true
+      },
+      {
+        title: 'New York State Business Development Grant',
+        description: 'New York state funding for business growth and economic development.',
+        url: 'https://esd.ny.gov/',
+        stateCode: 'NY',
+        featured: true
+      },
+      {
+        title: 'Illinois Small Business Grant',
+        description: 'Illinois state grants for small business development and job creation.',
+        url: 'https://www2.illinois.gov/dceo/Pages/default.aspx',
+        stateCode: 'IL',
+        featured: true
+      }
+    ]
+    
+    return stateGrants
+  } catch (error) {
+    console.error('Error fetching state grants:', error)
+    return []
+  }
+}
+
 // Add grants to database
 export async function addGrantsToDatabase(grants: GrantData[]): Promise<void> {
   try {

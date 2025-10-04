@@ -5,6 +5,7 @@ import {
   fetchGrantsGovRSS, 
   fetchUSDAGrants, 
   fetchEDAGrants, 
+  fetchStateGrants,
   addGrantsToDatabase 
 } from '@/lib/grant-fetchers'
 
@@ -33,7 +34,18 @@ export async function GET(_req: NextRequest) {
   const { prisma } = await import('@/lib/prisma')
 
   try {
-    // 1) deactivate expired programs
+    // 1) Delete expired programs (older than 30 days)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    
+    const deletedExpired = await prisma.program.deleteMany({
+      where: { 
+        active: false, 
+        deadline: { lt: thirtyDaysAgo }
+      }
+    })
+    
+    // 2) Deactivate recently expired programs
     const expired = await prisma.program.updateMany({
       where: { active: true, deadline: { lt: new Date() } },
       data: { active: false, featured: false },
@@ -99,6 +111,13 @@ export async function GET(_req: NextRequest) {
         newGrantsCount += edaGrants.length
       }
 
+      // Fetch state-specific grants
+      const stateGrants = await fetchStateGrants()
+      if (stateGrants.length > 0) {
+        await addGrantsToDatabase(stateGrants)
+        newGrantsCount += stateGrants.length
+      }
+
       if (newGrantsCount > 0) {
         await revalidatePrograms()
       }
@@ -108,6 +127,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
+      expiredProgramsDeleted: deletedExpired.count,
       expiredProgramsDeactivated: expired.count,
       orphanedPrograms,
       newGrantsFetched: newGrantsCount,
