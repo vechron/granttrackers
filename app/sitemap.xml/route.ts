@@ -26,7 +26,7 @@ export async function GET() {
   // Lazy-load sitemap functions
   const { generateSitemapUrls, generateSitemapXml } = await import('@/lib/sitemaps')
   
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://granttrackers.com'
   const urls = await generateSitemapUrls(baseUrl)
   const sitemap = generateSitemapXml(urls, baseUrl)
 
