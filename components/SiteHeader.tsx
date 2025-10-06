@@ -29,6 +29,12 @@ export function SiteHeader() {
               States
             </Link>
             <Link 
+              href="/state/us" 
+              className="text-gray-600 hover:text-primary-600 transition-colors"
+            >
+              Federal
+            </Link>
+            <Link 
               href="/faq" 
               className="text-gray-600 hover:text-primary-600 transition-colors"
             >
@@ -78,6 +84,13 @@ export function SiteHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 States
+              </Link>
+              <Link 
+                href="/state/us" 
+                className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Federal
               </Link>
               <Link 
                 href="/faq" 
