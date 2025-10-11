@@ -14,7 +14,11 @@ export async function generateSitemapUrls(baseUrl: string) {
   const staticPages = [
     { url: '', priority: 1.0, changefreq: 'daily' },
     { url: '/state', priority: 0.9, changefreq: 'weekly' },
+    { url: '/about', priority: 0.8, changefreq: 'monthly' },
+    { url: '/contact', priority: 0.7, changefreq: 'monthly' },
     { url: '/faq', priority: 0.8, changefreq: 'monthly' },
+    { url: '/privacy', priority: 0.5, changefreq: 'yearly' },
+    { url: '/terms', priority: 0.5, changefreq: 'yearly' },
   ]
 
   const statePages = states.map(state => ({
